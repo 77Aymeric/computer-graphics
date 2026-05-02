@@ -11,10 +11,10 @@ afin de rendre la forme lisible et de vérifier que les normales sont bien trans
 
 ### Où le voir dans le code
 - Fragment shader :
-  - `MyPreparation/PreparationAuProjet/shaders/project.fs.glsl`
+  - `AnciennePreparation/PreparationAuProjet/shaders/project.fs.glsl`
     - `ndotl = max(dot(N, L), 0)`
     - `diffuse + ambient`
 - Normales :
-  - `MyPreparation/PreparationAuProjet/shaders/project.vs.glsl` (`u_NormalMatrix * a_Normal`)
-  - `MyPreparation/PreparationAuProjet/src/Math.hpp` (normal matrix)
+  - `AnciennePreparation/PreparationAuProjet/shaders/project.vs.glsl` (`u_NormalMatrix * a_Normal`)
+  - `AnciennePreparation/PreparationAuProjet/src/Math.hpp` (normal matrix)
 

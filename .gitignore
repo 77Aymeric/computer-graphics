@@ -10,8 +10,8 @@
 MyTD1/td1
 MyTD1/td1_3_3
 MyTD1/testgl
-MyPreparation/testgl
-MyPreparation/PreparationAuProjet/PreparationAuProjet
+AnciennePreparation/testgl
+AnciennePreparation/PreparationAuProjet/PreparationAuProjet
 MyTD2/A1
 MyTD2/A2
 MyTD2/B1
@@ -22,7 +22,7 @@ MyTD2/TD1FILES/TD1/td1
 MyTD2/TD1FILES/TD1/td1_3_3
 MyTD2/TD1FILES/TD1/testgl
 
-MyPreparation/TPs/TP01_pipeline/tp01_pipeline
-MyPreparation/TPs/TP02_rendu3D/tp02_rendu3d
-MyPreparation/TPs/TP03_transformations/tp03_transformations
-MyPreparation/TPs/TP04_illumination/tp04_illumination
+AnciennePreparation/TPs/TP01_pipeline/tp01_pipeline
+AnciennePreparation/TPs/TP02_rendu3D/tp02_rendu3d
+AnciennePreparation/TPs/TP03_transformations/tp03_transformations
+AnciennePreparation/TPs/TP04_illumination/tp04_illumination

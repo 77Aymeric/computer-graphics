@@ -10,12 +10,12 @@
 
 ### Où le voir dans le code
 - Rendu 3D + depth/culling :
-  - `MyPreparation/PreparationAuProjet/main.cpp` :
+  - `AnciennePreparation/PreparationAuProjet/main.cpp` :
     - `glEnable(GL_DEPTH_TEST)` + `glClear(GL_DEPTH_BUFFER_BIT)`
     - `glEnable(GL_CULL_FACE)` + `glCullFace(GL_BACK)`
     - `Perspective(...)`
 - Dragon (VBO/EBO indexé) :
-  - `MyPreparation/PreparationAuProjet/src/DragonMesh.cpp` :
+  - `AnciennePreparation/PreparationAuProjet/src/DragonMesh.cpp` :
     - `DragonVertices` + `DragonIndices` (dans `DragonData.h`)
     - `glDrawElements(...)`
 

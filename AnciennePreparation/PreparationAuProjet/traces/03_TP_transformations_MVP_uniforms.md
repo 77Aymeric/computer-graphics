@@ -12,13 +12,13 @@
 
 ### Où le voir dans le code
 - Matrices + uniforms :
-  - `MyPreparation/PreparationAuProjet/main.cpp` :
+  - `AnciennePreparation/PreparationAuProjet/main.cpp` :
     - `Mat4 projection = Perspective(...)`
     - `Mat4 view = g_Camera.GetViewMatrix()`
     - `Mat4 model = RotationY(...)`
     - `glUniformMatrix4fv(u_Model/u_View/u_Projection, ...)`
 - Calcul `LookAt` / `Perspective` :
-  - `MyPreparation/PreparationAuProjet/src/Math.hpp`
+  - `AnciennePreparation/PreparationAuProjet/src/Math.hpp`
 - Vertex shader (application MVP) :
-  - `MyPreparation/PreparationAuProjet/shaders/project.vs.glsl`
+  - `AnciennePreparation/PreparationAuProjet/shaders/project.vs.glsl`
 

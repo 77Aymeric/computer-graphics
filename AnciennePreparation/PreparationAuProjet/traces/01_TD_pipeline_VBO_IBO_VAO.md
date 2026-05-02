@@ -11,6 +11,6 @@
 ### Où le voir dans le code
 - Base “squelette” : `correction_tp1_vbo_ibo_vao/correction_tp1.cpp` (mêmes étapes VBO/IBO/VAO).
 - Réutilisé dans le rendu final :
-  - `MyPreparation/PreparationAuProjet/src/DragonMesh.cpp` : `glGenBuffers`, `glBufferData`, VAO + attributs.
-  - `MyPreparation/PreparationAuProjet/main.cpp` : chargement shaders + boucle de rendu.
+  - `AnciennePreparation/PreparationAuProjet/src/DragonMesh.cpp` : `glGenBuffers`, `glBufferData`, VAO + attributs.
+  - `AnciennePreparation/PreparationAuProjet/main.cpp` : chargement shaders + boucle de rendu.
 
