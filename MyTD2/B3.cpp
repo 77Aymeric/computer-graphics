@@ -1,0 +1,149 @@
+#define GL_SILENCE_DEPRECATION
+#include "common/GLShader.h"
+#include "GL/glew.h"
+#include <GLUT/glut.h>
+#include <cstddef>
+
+#ifdef WIN32
+#include "GL/wglew.h"
+#endif
+
+#ifdef __APPLE__
+#define GL_GEN_VERTEX_ARRAYS glGenVertexArraysAPPLE
+#define GL_BIND_VERTEX_ARRAY glBindVertexArrayAPPLE
+#define GL_DELETE_VERTEX_ARRAYS glDeleteVertexArraysAPPLE
+#else
+#define GL_GEN_VERTEX_ARRAYS glGenVertexArrays
+#define GL_BIND_VERTEX_ARRAY glBindVertexArray
+#define GL_DELETE_VERTEX_ARRAYS glDeleteVertexArrays
+#endif
+
+struct Position2D
+{
+    float x;
+    float y;
+};
+
+struct ColorRGB
+{
+    float r;
+    float g;
+    float b;
+};
+
+struct Vertex
+{
+    Position2D position;
+    ColorRGB color;
+};
+
+GLShader g_BasicShader;
+GLuint VBO;
+GLuint EBO;
+GLuint VAO;
+const int WINDOW_WIDTH = 960;
+const int WINDOW_HEIGHT = 540;
+
+bool Initialise()
+{
+    static const Vertex triangle[] = {
+        { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+        { {  0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+        { {  0.0f,  0.5f }, { 0.0f, 0.0f, 1.0f } }
+    };
+
+    static const unsigned short indices[] = {
+        0, 1, 2
+    };
+
+    g_BasicShader.LoadVertexShader("basic.vs");
+    g_BasicShader.LoadFragmentShader("basic.fs");
+    g_BasicShader.Create();
+
+    auto program = g_BasicShader.GetProgram();
+    glUseProgram(program);
+
+    int loc_position = glGetAttribLocation(program, "a_position");
+    int loc_color = glGetAttribLocation(program, "a_color");
+
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    GL_GEN_VERTEX_ARRAYS(1, &VAO);
+    GL_BIND_VERTEX_ARRAY(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+    // premier parametre = 0, correspond ici au canal/emplacement du premier attribut
+    // glEnableVertexAttribArray() indique que les donnees sont generiques (proviennent
+    // d’un tableau) et non pas communes a tous les sommets
+    glEnableVertexAttribArray(loc_position);
+    glVertexAttribPointer(loc_position, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position));
+
+    glEnableVertexAttribArray(loc_color);
+    glVertexAttribPointer(loc_color, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, color));
+
+    GL_BIND_VERTEX_ARRAY(0);
+    // je recommande de reinitialiser les etats a la fin pour eviter les effets de bord
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // cette fonction est spécifique à Windows et permet d’activer (1) ou non (0)
+    // la synchronization vertical. Elle necessite l’include wglew.h
+#ifdef WIN32
+    wglSwapIntervalEXT(1);
+#endif
+
+    return true;
+}
+
+void Terminate()
+{
+    g_BasicShader.Destroy();
+    GL_DELETE_VERTEX_ARRAYS(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}
+
+void Render()
+{
+    // etape a. A vous de recuperer/passer les variables width/height
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    // etape b. Notez que glClearColor est un etat, donc persistant
+    glClearColor(0.5f, 0.5f, 0.5f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // etape c. on specifie le shader program a utiliser
+    auto program = g_BasicShader.GetProgram();
+    glUseProgram(program);
+
+    GL_BIND_VERTEX_ARRAY(VAO);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, 0);
+    // on suppose que la phase d’echange des buffers front et back
+    // le « swap buffers » est effectuee juste apres
+}
+
+void Display()
+{
+    Render();
+    glutSwapBuffers();
+    glutPostRedisplay();
+}
+
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE);
+    glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+    glutCreateWindow("Triangle");
+    Initialise();
+    glutDisplayFunc(Display);
+    glutMainLoop();
+    return 0;
+}
