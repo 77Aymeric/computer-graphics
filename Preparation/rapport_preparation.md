@@ -1,40 +1,43 @@
 # Préparation au projet OpenGL
 
+**Étudiants :** SEDDI Allan et LETELLIER Aymeric  
+**Classe :** E4FI
+
 ## Introduction
 
-Ce document présente la préparation réalisée dans le dossier `Preparation/`. Il suit la logique de la consigne sous forme `exercice -> réponse -> explication`, puis résume l'intégration finale avec les notions reprises des anciens TD/TP.
+Ce document explique ce qui a été fait dans le dossier `Preparation/` pour le TP de préparation au projet. Le but était surtout de rassembler les notions vues dans les anciens TD/TP : buffers OpenGL, rendu 3D, matrices, caméra et éclairage.
 
-Le programme affiche le Stanford Dragon avec une caméra orbitale, une matrice de vue calculée manuellement, une chaîne `Model/View/Projection`, et un éclairage simple basé sur les normales.
+Le programme affiche le Stanford Dragon avec une caméra orbitale. La caméra est calculée avec une fonction `LookAt`, et le rendu utilise les matrices `Model`, `View` et `Projection`.
 
 ![Vue générale du rendu](ScreenShots/Screenshot%202026-05-03%20at%2015.36.12.png)
 
-Cette première capture montre le rendu principal : le dragon est affiché avec une projection perspective, un fond sombre et un éclairage qui permet de lire le volume.
+Sur cette capture, on voit le rendu final du dragon dans la fenêtre OpenGL. Le fond est volontairement simple pour mieux voir le modèle et l'éclairage.
 
-Fichiers principaux :
+Les fichiers importants sont :
 
-- `preparation.cpp` : code C++ principal.
-- `shaders/project.vs.glsl` : vertex shader.
-- `shaders/project.fs.glsl` : fragment shader.
-- `common/GLShader.*` : utilitaire de compilation des shaders.
-- `Makefile` : compilation et lancement.
+- `preparation.cpp` : le code principal du TP.
+- `shaders/project.vs.glsl` : le vertex shader.
+- `shaders/project.fs.glsl` : le fragment shader.
+- `common/GLShader.*` : le code fourni/utilisé pour charger les shaders.
+- `Makefile` : la compilation.
 
 ## Exercice 1.1 - Multiplication de matrices
 
 ### Réponse
 
-Une fonction `Multiply` a été ajoutée pour multiplier deux matrices homogènes 4x4 :
+J'ai ajouté une fonction qui multiplie deux matrices 4x4 :
 
 ```cpp
 Mat4 Multiply(const Mat4& A, const Mat4& B)
 ```
 
-Les matrices sont stockées en colonne-major, comme attendu par OpenGL. L'accès à un coefficient se fait donc avec :
+Les matrices sont stockées comme OpenGL les attend, c'est-à-dire en colonne-major. Pour accéder à une case, on utilise donc :
 
 ```cpp
 matrix[col * 4 + row]
 ```
 
-La formule utilisée est :
+Le calcul fait la somme habituelle d'une multiplication matricielle :
 
 \[
 C_{row,col} = \sum_k A_{row,k} \cdot B_{k,col}
@@ -42,33 +45,35 @@ C_{row,col} = \sum_k A_{row,k} \cdot B_{k,col}
 
 ### Explication
 
-Cette fonction sert à préparer la composition de transformations. Au lieu d'envoyer séparément une matrice de translation, une matrice de rotation et une matrice de scale, on peut construire une seule matrice monde.
+Cette fonction sert à pouvoir composer plusieurs transformations dans une seule matrice. Par exemple, au lieu d'envoyer séparément une translation, une rotation et un scale au shader, on peut tout regrouper dans une matrice monde.
 
-Le principe est :
+L'ordre attendu est :
 
 \[
 World = Translation \cdot Rotation \cdot Scale
 \]
 
-Avec des vecteurs colonnes, l'ordre d'application se lit de droite à gauche. Un sommet local est donc d'abord mis à l'échelle, puis tourné, puis déplacé dans la scène.
+Comme on utilise des vecteurs colonnes, la transformation la plus à droite est appliquée en premier.
 
-## Exercice 1.2 - Remplacer les transformations locales par une World Matrix
+## Exercice 1.2 - World Matrix
 
 ### Réponse
 
-Le programme utilise une matrice unique `u_Model` pour représenter la transformation locale vers monde :
+Dans le code, la transformation de l'objet est représentée par une seule matrice `u_Model`.
+
+Dans `preparation.cpp`, elle est créée comme une identité :
 
 ```cpp
 Mat4 model = Identity();
 ```
 
-Cette matrice est envoyée au vertex shader :
+Puis elle est envoyée au shader :
 
 ```cpp
 glUniformMatrix4fv(locModel, 1, GL_FALSE, model.m.data());
 ```
 
-Dans le shader, la position du sommet est transformée avec :
+Dans le vertex shader, on obtient la position monde avec :
 
 ```glsl
 vec4 worldPos = u_Model * vec4(a_Position, 1.0);
@@ -76,21 +81,21 @@ vec4 worldPos = u_Model * vec4(a_Position, 1.0);
 
 ### Explication
 
-Dans cette préparation, `u_Model` vaut l'identité car le dragon est déjà affiché dans une position correcte. Le point important est que le pipeline est prêt pour une vraie transformation monde unique.
+Ici, le dragon n'a pas besoin d'être déplacé ou tourné pour être visible, donc la matrice `Model` reste l'identité. Mais le code est quand même organisé comme si on avait une vraie matrice monde.
 
-La position suit ensuite la chaîne :
+La position passe ensuite dans la chaîne complète :
 
 \[
 clipPosition = Projection \cdot View \cdot Model \cdot position
 \]
 
-Ce choix simplifie le shader : il reçoit une matrice `Model`, une matrice `View` et une matrice `Projection`, au lieu de recevoir plusieurs transformations locales séparées.
+C'est le même principe que dans les TP précédents sur les transformations, mais ici tout est regroupé proprement dans les trois matrices principales.
 
 ## Exercice 1.3 - Normal Matrix
 
 ### Réponse
 
-Les normales ne sont pas transformées directement par `u_Model`. Une matrice dédiée est calculée côté CPU :
+J'ai aussi ajouté une matrice spéciale pour les normales :
 
 ```cpp
 static Mat3 NormalMatrixFromModel(const Mat4& model)
@@ -100,19 +105,19 @@ static Mat3 NormalMatrixFromModel(const Mat4& model)
 }
 ```
 
-Elle correspond à :
+La formule utilisée est :
 
 \[
 NormalMatrix = transpose(inverse(mat3(Model)))
 \]
 
-Elle est ensuite envoyée au shader avec :
+Elle est envoyée au shader avec :
 
 ```cpp
 glUniformMatrix3fv(locNormalMat, 1, GL_FALSE, normalMat.m.data());
 ```
 
-Dans le vertex shader :
+Et dans le vertex shader :
 
 ```glsl
 v_Normal = normalize(u_NormalMatrix * a_Normal);
@@ -120,21 +125,21 @@ v_Normal = normalize(u_NormalMatrix * a_Normal);
 
 ### Explication
 
-Une normale est une direction, pas une position. Elle ne doit donc pas être affectée par une translation. De plus, si une transformation contient un scale non uniforme, appliquer directement la matrice `Model` sur la normale peut donner un résultat faux.
+Une normale n'est pas une position. C'est seulement une direction. Elle ne doit donc pas être transformée exactement comme un sommet.
 
-La normal matrix corrige ce problème. Même si, dans ce rendu, `Model` vaut l'identité, le code respecte la formule attendue et reste correct si une transformation est ajoutée plus tard.
+Dans ce TP, la matrice `Model` est simple, mais j'ai quand même mis la formule correcte. Comme ça, si on ajoute plus tard un scale ou une rotation sur le dragon, les normales resteront cohérentes pour l'éclairage.
 
 ## Exercice 2.1 - Fonction LookAt
 
 ### Réponse
 
-La fonction `LookAt` a été codée manuellement :
+La fonction `LookAt` a été recodée dans `preparation.cpp` :
 
 ```cpp
 Mat4 LookAt(const Vec3& position, const Vec3& target, const Vec3& up)
 ```
 
-Elle calcule d'abord les axes de la caméra :
+Elle commence par construire les trois axes de la caméra :
 
 \[
 forward = normalize(position - target)
@@ -148,7 +153,7 @@ right = normalize(up \times forward)
 up2 = forward \times right
 \]
 
-Puis elle calcule la translation inverse :
+Ensuite, elle calcule la translation inverse avec des produits scalaires :
 
 \[
 tx = -dot(position, right)
@@ -162,50 +167,54 @@ ty = -dot(position, up2)
 tz = -dot(position, forward)
 \]
 
-La matrice finale est renvoyée et utilisée comme view matrix.
+La matrice obtenue est la matrice de vue.
 
 ### Explication
 
-La view matrix transforme les coordonnées du monde vers le repère de la caméra. Dans le repère caméra, la caméra est toujours à l'origine.
+Le but de `LookAt` est de placer la scène dans le repère de la caméra. En réalité, on ne déplace pas la caméra dans OpenGL : on transforme tous les objets avec l'inverse de la transformation caméra.
 
-La fonction `LookAt` reconstruit donc une base orthonormale à partir de la position de caméra, de la cible et du vecteur `up`. Ensuite, les produits scalaires permettent de projeter la position de la caméra sur cette base pour obtenir la translation inverse.
+La fonction reconstruit donc une base caméra à partir de :
 
-Cette matrice est envoyée au shader via `u_View`.
+- la position de la caméra;
+- le point regardé;
+- le vecteur `up`.
 
-## Exercice 2.2 - Utilisation de la View Matrix dans le shader
+Après ça, la matrice est envoyée au shader avec l'uniform `u_View`.
+
+## Exercice 2.2 - Utilisation de la View Matrix
 
 ### Réponse
 
-La view matrix est appliquée dans le vertex shader avant la projection :
+Dans le vertex shader, la matrice de vue est appliquée après la matrice modèle et avant la projection :
 
 ```glsl
 gl_Position = u_Projection * u_View * worldPos;
 ```
 
-Les normales ne reçoivent pas `u_View`. Elles sont uniquement transformées par `u_NormalMatrix`.
+Les normales ne sont pas multipliées par `u_View`. Elles utilisent seulement `u_NormalMatrix`.
 
 ### Explication
 
-La position d'un sommet doit passer successivement :
+La position d'un sommet suit cet ordre :
 
-1. du repère local vers le monde avec `u_Model`;
-2. du monde vers la caméra avec `u_View`;
-3. de la caméra vers le clip space avec `u_Projection`.
+1. passage du local vers le monde avec `Model`;
+2. passage du monde vers la caméra avec `View`;
+3. passage vers l'espace de projection avec `Projection`.
 
-Les normales restent dans l'espace utilisé pour l'éclairage. Ici, l'éclairage est cohérent avec les normales transformées par la matrice issue de `Model`.
+C'est important de ne pas mélanger les normales avec la view matrix ici, car l'éclairage est calculé de manière cohérente avec les normales transformées par la matrice modèle.
 
 ## Exercice 3 - Caméra orbitale
 
 ### Réponse
 
-Une structure `OrbitCamera` a été ajoutée. Elle contient :
+J'ai créé une structure `OrbitCamera` avec :
 
-- `target` : le point regardé;
+- `target` : le point que la caméra regarde;
 - `distance` : la distance entre la caméra et la cible;
-- `phi` : l'azimut;
-- `theta` : l'élévation.
+- `phi` : l'angle horizontal;
+- `theta` : l'angle vertical.
 
-La position de la caméra est calculée en coordonnées sphériques :
+La caméra est placée sur une sphère autour de la cible :
 
 \[
 Y = R \cdot sin(theta)
@@ -219,7 +228,7 @@ X = R \cdot cos(theta) \cdot cos(phi)
 Z = R \cdot cos(theta) \cdot sin(phi)
 \]
 
-Puis la vue est obtenue avec :
+Une fois la position calculée, la view matrix est obtenue avec :
 
 ```cpp
 return LookAt(eye, target, up);
@@ -227,41 +236,43 @@ return LookAt(eye, target, up);
 
 ### Explication
 
-La caméra se déplace sur une sphère autour de la cible. Le rayon de cette sphère est `distance`.
+La souris modifie les angles de la caméra :
 
-Les entrées GLFW contrôlent les paramètres :
+- déplacement horizontal : changement de `phi`;
+- déplacement vertical : changement de `theta`;
+- molette : zoom avec la distance.
 
-- clic gauche maintenu + déplacement horizontal : modification de `phi`;
-- clic gauche maintenu + déplacement vertical : modification de `theta`;
-- molette : modification de `distance`.
+J'ai aussi limité les valeurs pour éviter les comportements gênants :
 
-Des limites sont appliquées :
-
-- `phi` est ramené dans `[-PI, PI]`;
-- `theta` est limité pour éviter que la caméra se retourne;
-- `distance` est limitée entre `minDistance` et `maxDistance`.
+- `phi` est ramené entre `-PI` et `PI`;
+- `theta` est bloqué pour éviter de retourner la caméra;
+- `distance` reste entre une distance minimale et une distance maximale.
 
 ![Caméra orbitale - autre angle](ScreenShots/Screenshot%202026-05-03%20at%2015.36.14.png)
 
-Cette capture illustre l'intérêt de la caméra orbitale : le dragon reste la cible de la caméra, mais le point de vue change en modifiant les angles `phi` et `theta`.
+Sur cette capture, le dragon est vu avec un autre angle. Cela montre que la caméra tourne bien autour de la cible au lieu de déplacer directement l'objet.
 
 ## Exercice 4 - Affichage du dragon
 
 ### Réponse
 
-Le dragon est chargé depuis `Context/DragonData.h`. Le tableau de sommets contient 8 flottants par sommet :
+Le modèle utilisé est le dragon fourni dans `Context/DragonData.h`.
 
-- 3 flottants pour la position;
-- 3 flottants pour la normale;
-- 2 flottants pour les UV.
+Chaque sommet contient 8 flottants :
 
-Dans ce rendu, seules les positions et les normales sont utilisées. Les données sont envoyées au GPU dans :
+- 3 pour la position;
+- 3 pour la normale;
+- 2 pour les UV.
+
+Dans ce TP, j'utilise seulement la position et la normale. Les UV restent dans les données mais ne servent pas, car il n'y a pas de texture.
+
+Le code crée :
 
 - un VBO pour les sommets;
 - un IBO pour les indices;
-- un VAO pour mémoriser la configuration.
+- un VAO pour garder la configuration des attributs.
 
-Le rendu utilise :
+Le dessin se fait avec :
 
 ```cpp
 glDrawElements(GL_TRIANGLES, m_IndexCount, GL_UNSIGNED_SHORT, nullptr);
@@ -269,24 +280,24 @@ glDrawElements(GL_TRIANGLES, m_IndexCount, GL_UNSIGNED_SHORT, nullptr);
 
 ### Explication
 
-Cette partie reprend directement les anciens TD sur le pipeline OpenGL moderne. Le VBO évite de renvoyer les sommets à chaque frame. L'IBO permet de réutiliser les sommets grâce à un tableau d'indices. Le VAO évite de reconfigurer les attributs à chaque rendu.
+Cette partie reprend directement les TD sur VBO, IBO et VAO.
 
-Les attributs du shader sont :
+Le VBO évite d'utiliser directement un tableau CPU à chaque frame. L'IBO permet de dessiner avec des indices, ce qui est mieux pour un vrai maillage. Le VAO garde les liens entre les buffers et les attributs du shader.
 
-- `a_Position` pour la position;
-- `a_Normal` pour la normale.
+Les deux attributs utilisés sont :
 
-Les UV sont gardées dans le stride, mais elles ne sont pas utilisées car le texturing n'est pas nécessaire pour cette préparation.
+- `a_Position`;
+- `a_Normal`.
 
 ![Dragon vu de dos](ScreenShots/Screenshot%202026-05-03%20at%2015.36.20.png)
 
-Cette vue confirme que le maillage est rendu en 3D avec les indices, la profondeur et le culling. Le changement d'angle permet aussi de vérifier que la matrice de vue est bien recalculée par la caméra orbitale.
+Cette vue montre que le modèle est bien en 3D et que la caméra peut tourner autour. On voit aussi que la profondeur est bien prise en compte.
 
 ## Exercice 5 - Projection perspective, depth test et culling
 
 ### Réponse
 
-Le programme active le depth test et le back-face culling :
+Le rendu 3D active le depth test et le culling :
 
 ```cpp
 glEnable(GL_DEPTH_TEST);
@@ -295,7 +306,7 @@ glEnable(GL_CULL_FACE);
 glCullFace(GL_BACK);
 ```
 
-La projection perspective est calculée avec :
+La matrice de projection est calculée à chaque frame avec le ratio de la fenêtre :
 
 ```cpp
 Perspective(60.0f * pi / 180.0f, aspect, 0.1f, 100.0f);
@@ -303,29 +314,29 @@ Perspective(60.0f * pi / 180.0f, aspect, 0.1f, 100.0f);
 
 ### Explication
 
-Le depth test permet d'afficher correctement les faces selon leur profondeur. Sans lui, des triangles éloignés pourraient apparaître devant des triangles proches.
+Le depth test permet d'afficher les faces dans le bon ordre en fonction de leur profondeur. Sans ça, des triangles derrière pourraient passer devant.
 
-Le culling supprime les faces arrière. Cela améliore le rendu et évite de dessiner des faces qui ne devraient pas être visibles.
+Le back-face culling évite de dessiner les faces arrière. C'est utile pour un maillage fermé comme le dragon.
 
-La projection perspective donne une impression de profondeur : les objets éloignés apparaissent plus petits que les objets proches.
+La projection perspective donne l'effet de profondeur classique : ce qui est loin paraît plus petit.
 
-## Exercice 6 - Illumination ambiante et diffuse
+## Exercice 6 - Éclairage
 
 ### Réponse
 
-Le fragment shader calcule une lumière diffuse de Lambert :
+Le fragment shader utilise d'abord une lumière diffuse de Lambert :
 
 ```glsl
 float LambertDiffuse = max(dot(N, L), 0.0);
 ```
 
-Il ajoute aussi une ambiance hémisphérique :
+Ensuite, il ajoute une ambiance hémisphérique :
 
 ```glsl
 vec3 hemiAmbient = mix(groundColor, skyColor, t);
 ```
 
-Enfin, une correction gamma est appliquée :
+Puis une correction gamma :
 
 ```glsl
 vec3 colorSRGB = pow(colorLinear, vec3(1.0 / 2.2));
@@ -333,48 +344,46 @@ vec3 colorSRGB = pow(colorLinear, vec3(1.0 / 2.2));
 
 ### Explication
 
-La lumière diffuse dépend de l'angle entre la normale et la direction de lumière. Plus la normale pointe vers la lumière, plus la surface est éclairée.
+La partie diffuse dépend de l'angle entre la normale et la lumière. Si la normale regarde vers la lumière, la zone est claire. Sinon, elle devient sombre.
 
-L'ambiance hémisphérique donne une couleur différente selon l'orientation de la normale : une surface orientée vers le haut reçoit davantage la couleur du ciel, tandis qu'une surface orientée vers le bas reçoit davantage la couleur du sol.
+L'ambiante hémisphérique rend le résultat plus lisible. Les faces orientées vers le haut prennent un peu la couleur du ciel, et les faces vers le bas prennent plutôt la couleur du sol.
 
-La correction gamma rend le résultat visuel plus naturel sur un écran.
+La correction gamma évite un rendu trop brutal et donne un résultat plus agréable à l'écran.
 
-### Captures des étapes d'éclairage
+### Étapes visuelles de l'éclairage
 
-Les captures ajoutées après le pull montrent les étapes successives utilisées pour arriver au rendu final.
+J'ai gardé trois captures pour montrer l'évolution de l'éclairage.
 
 ![Étape 1 - Diffuse seule](ScreenShots/00_diffuse_only.png)
 
-Avec seulement la lumière diffuse, les zones qui ne sont pas orientées vers la lumière deviennent très sombres. Cela permet de vérifier que le produit scalaire entre la normale et la direction de lumière fonctionne, mais le modèle reste difficile à lire dans les ombres.
+Avec seulement la diffuse, le relief est visible, mais les zones dans l'ombre deviennent presque noires.
 
 ![Étape 2 - Ambiante constante](ScreenShots/01_ambient_constant.png)
 
-L'ajout d'une ambiante constante rend les zones sombres visibles. Le volume est plus lisible, mais l'éclairage reste uniforme dans les parties non directement éclairées.
+Avec une ambiante constante, on récupère de la lisibilité dans les ombres. Par contre, les zones non éclairées restent assez uniformes.
 
 ![Étape 3 - Ambiante hémisphérique et gamma](ScreenShots/02_hemi_gamma.png)
 
-La version finale utilise une ambiance hémisphérique et une correction gamma. Les surfaces orientées vers le haut reçoivent une teinte plus claire/froide, les surfaces orientées vers le bas restent légèrement plus sombres, et l'image paraît moins dure.
-
-Les captures précédentes montrent donc le rôle de chaque ajout : diffuse pour le relief, ambiante pour la lisibilité, hémisphérique et gamma pour un rendu plus agréable.
+Avec l'ambiante hémisphérique et le gamma, le rendu final est plus doux. On garde les volumes, mais les ombres sont moins bouchées.
 
 ## Intégration finale
 
-À chaque frame, la boucle de rendu effectue les étapes suivantes :
+La boucle de rendu fait les étapes suivantes :
 
-1. récupérer la taille du framebuffer;
-2. mettre à jour le viewport;
-3. effacer la couleur et la profondeur;
-4. recalculer la projection avec le bon ratio;
-5. calculer la view matrix avec la caméra orbitale;
-6. calculer la normal matrix;
-7. envoyer les uniforms au shader;
-8. dessiner le dragon.
+1. récupération de la taille de la fenêtre;
+2. mise à jour du viewport;
+3. nettoyage de la couleur et de la profondeur;
+4. calcul de la projection;
+5. calcul de la view matrix avec la caméra orbitale;
+6. calcul de la normal matrix;
+7. envoi des uniforms;
+8. dessin du dragon.
 
-Cette structure regroupe les notions vues dans les anciens TD/TP : pipeline moderne, rendu indexé, projection 3D, transformations, caméra, normales et illumination.
+Le code reste volontairement regroupé dans `preparation.cpp`, car le but était de préparer les notions pour le projet plutôt que de faire une grosse architecture.
 
-## Compilation et exécution
+## Compilation
 
-Depuis `Preparation/` :
+Depuis le dossier `Preparation/` :
 
 ```bash
 make
@@ -387,36 +396,27 @@ Le binaire généré est :
 bin/preparation
 ```
 
-Le Makefile compile en C++17 et lie GLFW, GLEW ainsi que les frameworks OpenGL nécessaires sur macOS.
+## Bilan
 
-## Validation
+Ce TP m'a permis de reprendre les étapes importantes des anciens TD/TP :
 
-Points validés dans cette préparation :
+- création des buffers OpenGL;
+- rendu indexé avec `glDrawElements`;
+- projection perspective;
+- matrices `Model`, `View`, `Projection`;
+- fonction `LookAt`;
+- caméra orbitale;
+- transformation correcte des normales;
+- éclairage diffus et ambiant.
 
-- [x] Affichage d'un objet 3D.
-- [x] Utilisation du Stanford Dragon.
-- [x] VBO pour les sommets.
-- [x] IBO pour les indices.
-- [x] VAO pour la configuration des attributs.
-- [x] Projection perspective.
-- [x] Depth test.
-- [x] Back-face culling.
-- [x] Fonction de multiplication de matrices 4x4.
-- [x] Matrice `Model` unique.
-- [x] Fonction `LookAt` codée manuellement.
-- [x] View matrix envoyée au vertex shader.
-- [x] Caméra orbitale contrôlée avec la souris et la molette.
-- [x] Normal matrix calculée depuis `Model`.
-- [x] Éclairage diffus.
-- [x] Ambiance hémisphérique.
-- [x] Correction gamma.
+Le rendu final reste simple, mais il valide les points principaux demandés pour la préparation au projet.
 
 ## Améliorations possibles
 
-Le rendu actuel est volontairement centré sur la préparation demandée. Pour aller plus loin, on pourrait :
+Pour aller plus loin, on pourrait ajouter :
 
-- ajouter une vraie transformation `Model` avec translation, rotation et scale;
-- utiliser les UV du dragon pour ajouter une texture;
-- ajouter un contrôle clavier pour déplacer ou modifier la lumière;
-- sauvegarder des captures d'écran pour illustrer plusieurs vues orbitales;
-- ajouter un mode fil de fer pour mieux visualiser la géométrie.
+- une vraie transformation `Model` avec rotation ou scale;
+- une texture en utilisant les UV du dragon;
+- une lumière contrôlable au clavier;
+- un mode fil de fer;
+- une sauvegarde automatique des captures depuis le programme.
