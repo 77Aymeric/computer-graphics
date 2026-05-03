@@ -25,7 +25,7 @@ Les fichiers importants sont :
 
 ### Réponse
 
-J'ai ajouté une fonction qui multiplie deux matrices 4x4 :
+Nous avons ajouté une fonction qui multiplie deux matrices 4x4 :
 
 ```cpp
 Mat4 Multiply(const Mat4& A, const Mat4& B)
@@ -95,7 +95,7 @@ C'est le même principe que dans les TP précédents sur les transformations, ma
 
 ### Réponse
 
-J'ai aussi ajouté une matrice spéciale pour les normales :
+Nous avons aussi ajouté une matrice spéciale pour les normales :
 
 ```cpp
 static Mat3 NormalMatrixFromModel(const Mat4& model)
@@ -127,7 +127,7 @@ v_Normal = normalize(u_NormalMatrix * a_Normal);
 
 Une normale n'est pas une position. C'est seulement une direction. Elle ne doit donc pas être transformée exactement comme un sommet.
 
-Dans ce TP, la matrice `Model` est simple, mais j'ai quand même mis la formule correcte. Comme ça, si on ajoute plus tard un scale ou une rotation sur le dragon, les normales resteront cohérentes pour l'éclairage.
+Dans ce TP, la matrice `Model` est simple, mais nous avons quand même mis la formule correcte. Comme ça, si on ajoute plus tard un scale ou une rotation sur le dragon, les normales resteront cohérentes pour l'éclairage.
 
 ## Exercice 2.1 - Fonction LookAt
 
@@ -207,7 +207,7 @@ C'est important de ne pas mélanger les normales avec la view matrix ici, car l'
 
 ### Réponse
 
-J'ai créé une structure `OrbitCamera` avec :
+Nous avons créé une structure `OrbitCamera` avec :
 
 - `target` : le point que la caméra regarde;
 - `distance` : la distance entre la caméra et la cible;
@@ -242,7 +242,7 @@ La souris modifie les angles de la caméra :
 - déplacement vertical : changement de `theta`;
 - molette : zoom avec la distance.
 
-J'ai aussi limité les valeurs pour éviter les comportements gênants :
+Nous avons aussi limité les valeurs pour éviter les comportements gênants :
 
 - `phi` est ramené entre `-PI` et `PI`;
 - `theta` est bloqué pour éviter de retourner la caméra;
@@ -264,7 +264,7 @@ Chaque sommet contient 8 flottants :
 - 3 pour la normale;
 - 2 pour les UV.
 
-Dans ce TP, j'utilise seulement la position et la normale. Les UV restent dans les données mais ne servent pas, car il n'y a pas de texture.
+Dans ce TP, nous utilisons seulement la position et la normale. Les UV restent dans les données mais ne servent pas, car il n'y a pas de texture.
 
 Le code crée :
 
@@ -352,7 +352,7 @@ La correction gamma évite un rendu trop brutal et donne un résultat plus agré
 
 ### Étapes visuelles de l'éclairage
 
-J'ai gardé trois captures pour montrer l'évolution de l'éclairage.
+Nous avons gardé trois captures pour montrer l'évolution de l'éclairage.
 
 ![Étape 1 - Diffuse seule](ScreenShots/00_diffuse_only.png)
 
@@ -398,7 +398,7 @@ bin/preparation
 
 ## Bilan
 
-Ce TP m'a permis de reprendre les étapes importantes des anciens TD/TP :
+Ce TP nous a permis de reprendre les étapes importantes des anciens TD/TP :
 
 - création des buffers OpenGL;
 - rendu indexé avec `glDrawElements`;
@@ -411,12 +411,3 @@ Ce TP m'a permis de reprendre les étapes importantes des anciens TD/TP :
 
 Le rendu final reste simple, mais il valide les points principaux demandés pour la préparation au projet.
 
-## Améliorations possibles
-
-Pour aller plus loin, on pourrait ajouter :
-
-- une vraie transformation `Model` avec rotation ou scale;
-- une texture en utilisant les UV du dragon;
-- une lumière contrôlable au clavier;
-- un mode fil de fer;
-- une sauvegarde automatique des captures depuis le programme.
