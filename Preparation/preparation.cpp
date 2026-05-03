@@ -289,10 +289,10 @@ static void ScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 
 struct DragonMesh
 {
-    uint32_t vao = 0;
-    uint32_t vbo = 0;
-    uint32_t ebo = 0;
-    int indexCount = 0;
+    uint32_t m_VAO = 0;
+    uint32_t m_VBO = 0;
+    uint32_t m_IBO = 0;
+    int m_IndexCount = 0;
 
     bool Initialize(uint32_t program)
     {
@@ -301,19 +301,19 @@ struct DragonMesh
         const int locNormal = glGetAttribLocation(program, "a_Normal");
         if (locPos < 0 || locNormal < 0) return false;
 
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glGenBuffers(1, &m_VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(DragonVertices), DragonVertices, GL_STATIC_DRAW);
 
-        glGenBuffers(1, &ebo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glGenBuffers(1, &m_IBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(DragonIndices), DragonIndices, GL_STATIC_DRAW);
 
-        GL_GEN_VERTEX_ARRAYS(1, &vao);
-        GL_BIND_VERTEX_ARRAY(vao);
+        GL_GEN_VERTEX_ARRAYS(1, &m_VAO);
+        GL_BIND_VERTEX_ARRAY(m_VAO);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
 
         glVertexAttribPointer(locPos, 3, GL_FLOAT, GL_FALSE, strideBytes, (void*)0);
         glEnableVertexAttribArray(locPos);
@@ -325,23 +325,23 @@ struct DragonMesh
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        indexCount = (int)(sizeof(DragonIndices) / sizeof(DragonIndices[0]));
+        m_IndexCount = (int)(sizeof(DragonIndices) / sizeof(DragonIndices[0]));
         return true;
     }
 
-    void Destroy()
+    void Terminate()
     {
-        if (vao) GL_DELETE_VERTEX_ARRAYS(1, &vao);
-        if (vbo) glDeleteBuffers(1, &vbo);
-        if (ebo) glDeleteBuffers(1, &ebo);
-        vao = vbo = ebo = 0;
-        indexCount = 0;
+        if (m_VAO) GL_DELETE_VERTEX_ARRAYS(1, &m_VAO);
+        if (m_VBO) glDeleteBuffers(1, &m_VBO);
+        if (m_IBO) glDeleteBuffers(1, &m_IBO);
+        m_VAO = m_VBO = m_IBO = 0;
+        m_IndexCount = 0;
     }
 
-    void Draw() const
+    void Render() const
     {
-        GL_BIND_VERTEX_ARRAY(vao);
-        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, nullptr);
+        GL_BIND_VERTEX_ARRAY(m_VAO);
+        glDrawElements(GL_TRIANGLES, m_IndexCount, GL_UNSIGNED_SHORT, nullptr);
         GL_BIND_VERTEX_ARRAY(0);
     }
 };
@@ -414,13 +414,13 @@ int main()
         if (locProj >= 0) glUniformMatrix4fv(locProj, 1, GL_FALSE, projection.m.data());
         if (locNormalMat >= 0) glUniformMatrix3fv(locNormalMat, 1, GL_FALSE, normalMat.m.data());
 
-        dragon.Draw();
+        dragon.Render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    dragon.Destroy();
+    dragon.Terminate();
     shader.Destroy();
 
     glfwDestroyWindow(window);
