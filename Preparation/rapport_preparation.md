@@ -339,7 +339,23 @@ L'ambiance hémisphérique donne une couleur différente selon l'orientation de 
 
 La correction gamma rend le résultat visuel plus naturel sur un écran.
 
-Les captures précédentes montrent aussi le rôle de l'éclairage : les zones orientées vers la lumière sont plus claires, tandis que les autres restent visibles grâce à l'ambiance hémisphérique.
+### Captures des étapes d'éclairage
+
+Les captures ajoutées après le pull montrent les étapes successives utilisées pour arriver au rendu final.
+
+![Étape 1 - Diffuse seule](ScreenShots/00_diffuse_only.png)
+
+Avec seulement la lumière diffuse, les zones qui ne sont pas orientées vers la lumière deviennent très sombres. Cela permet de vérifier que le produit scalaire entre la normale et la direction de lumière fonctionne, mais le modèle reste difficile à lire dans les ombres.
+
+![Étape 2 - Ambiante constante](ScreenShots/01_ambient_constant.png)
+
+L'ajout d'une ambiante constante rend les zones sombres visibles. Le volume est plus lisible, mais l'éclairage reste uniforme dans les parties non directement éclairées.
+
+![Étape 3 - Ambiante hémisphérique et gamma](ScreenShots/02_hemi_gamma.png)
+
+La version finale utilise une ambiance hémisphérique et une correction gamma. Les surfaces orientées vers le haut reçoivent une teinte plus claire/froide, les surfaces orientées vers le bas restent légèrement plus sombres, et l'image paraît moins dure.
+
+Les captures précédentes montrent donc le rôle de chaque ajout : diffuse pour le relief, ambiante pour la lisibilité, hémisphérique et gamma pour un rendu plus agréable.
 
 ## Intégration finale
 
