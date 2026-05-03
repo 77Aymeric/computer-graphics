@@ -10,5 +10,9 @@ void main()
     vec3 L = normalize(-LightDirection);
 
     float LambertDiffuse = max(dot(N, L), 0.0);
-    gl_FragColor = vec4(vec3(LambertDiffuse), 1.0);
+
+    float ambientStrength = 0.15;
+    float lighting = clamp(ambientStrength + LambertDiffuse, 0.0, 1.0);
+
+    gl_FragColor = vec4(vec3(lighting), 1.0);
 }

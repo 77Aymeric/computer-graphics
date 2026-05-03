@@ -394,7 +394,6 @@ int main()
     g_Camera.theta = 0.3f;
 
     Mat4 model = Identity();
-    Mat3 normalMat = NormalMatrixFromModel(model);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -407,6 +406,7 @@ int main()
         float aspect = (h > 0) ? (float(w) / float(h)) : 1.0f;
         Mat4 projection = Perspective(60.0f * 3.1415926535f / 180.0f, aspect, 0.1f, 100.0f);
         Mat4 view = g_Camera.GetViewMatrix();
+        Mat3 normalMat = NormalMatrixFromModel(model);
 
         glUseProgram(program);
         if (locModel >= 0) glUniformMatrix4fv(locModel, 1, GL_FALSE, model.m.data());
